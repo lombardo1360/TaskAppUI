@@ -1,0 +1,167 @@
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<div class="calendar-container">
+  <header class="calendar-header">
+    <div class="header-content">
+      <nav class="header-left" aria-label="Navegación principal">
+        <button class="btn-back" (click)="goToDashboard()" aria-label="Volver al panel de control">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <h1>
+          <svg class="title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 3V7M16 3V7M4 9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Calendario de Tareas
+        </h1>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="goToTasks()" aria-label="Ir a la lista de tareas">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Lista
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Legend -->
+  <aside class="calendar-legend-top" aria-label="Leyenda de prioridades">
+    <div class="legend-content">
+      <div class="legend-items" role="list">
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot high" aria-hidden="true"></span>
+          <span>Alta</span>
+        </div>
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot medium" aria-hidden="true"></span>
+          <span>Media</span>
+        </div>
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot low" aria-hidden="true"></span>
+          <span>Baja</span>
+        </div>
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot completed" aria-hidden="true"></span>
+          <span>Completada</span>
+        </div>
+        <div class="legend-item" role="listitem">
+          <span class="legend-dot overdue" aria-hidden="true"></span>
+          <span>Vencida</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="calendar-content" id="main-content">
+    <section class="calendar-view" aria-label="Vista de calendario">
+      <nav class="calendar-controls" aria-label="Navegación de meses">
+        <button class="btn-nav" (click)="previousMonth()" aria-label="Mes anterior">◀</button>
+        <h2 class="month-title" aria-live="polite" aria-atomic="true">{{ getMonthName() }}</h2>
+        <button class="btn-nav" (click)="nextMonth()" aria-label="Mes siguiente">▶</button>
+        <button class="btn-today" (click)="today()" aria-label="Ir al día de hoy">Hoy</button>
+      </nav>
+
+      <div class="calendar-grid" aria-label="Calendario mensual">
+        <div class="weekday-header" *ngFor="let day of weekDays">
+          {{ day }}
+        </div>
+
+        <button 
+          *ngFor="let day of calendarDays; trackBy: trackByDate"
+          class="calendar-day"
+          [class.other-month]="!day.isCurrentMonth"
+          [class.today]="day.isToday"
+          [class.has-tasks]="day.tasks.length > 0"
+          [class.selected]="selectedDay === day"
+          [attr.aria-pressed]="selectedDay === day"
+          [attr.aria-label]="day.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) + ', ' + day.tasks.length + ' tarea' + (day.tasks.length !== 1 ? 's' : '')"
+          (click)="selectDay(day)">
+          
+          <div class="day-number">{{ day.date.getDate() }}</div>
+          
+          <div class="day-tasks" *ngIf="day.tasks.length > 0" aria-hidden="true">
+            <div 
+              *ngFor="let task of day.tasks.slice(0, 3); trackBy: trackByTaskId"
+              class="task-dot"
+              [class.completed]="task.isCompleted"
+              [class.high]="task.priority === 2"
+              [class.medium]="task.priority === 1"
+              [class.low]="task.priority === 0"
+              [class.overdue]="isOverdue(task)"
+              [title]="task.title">
+            </div>
+            <div *ngIf="day.tasks.length > 3" class="more-tasks">
+              +{{ day.tasks.length - 3 }}
+            </div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <aside class="task-details" *ngIf="selectedDay" role="complementary" aria-label="Detalles de tareas del día seleccionado">
+      <div class="details-header">
+        <h3>
+          {{ selectedDay.date.toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long' 
+          }) }}
+        </h3>
+        <span class="task-count">{{ selectedDay.tasks.length }} tarea(s)</span>
+      </div>
+
+      <div class="details-content">
+        <div *ngIf="selectedDay.tasks.length === 0" class="no-tasks" role="status">
+          <svg class="no-tasks-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p>No hay tareas para este día</p>
+        </div>
+
+        <article *ngFor="let task of selectedDay.tasks; trackBy: trackByTaskId" 
+             class="task-card"
+             [class.completed]="task.isCompleted"
+             [class.overdue]="isOverdue(task)"
+             [attr.aria-label]="'Tarea: ' + task.title + ', ' + (task.isCompleted ? 'completada' : 'pendiente')">
+          
+          <div class="task-header">
+            <span class="priority-icon" aria-hidden="true">{{ getPriorityIcon(task.priority) }}</span>
+            <h4 class="task-title">{{ task.title }}</h4>
+            <span *ngIf="task.isCompleted" class="status-badge completed" aria-label="Completada">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Completada
+            </span>
+            <span *ngIf="isOverdue(task)" class="status-badge overdue" role="status" aria-label="Vencida">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 8V13M12 16H12.01M5 20H19L12 4L5 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Vencida
+            </span>
+          </div>
+
+          <p *ngIf="task.description" class="task-description">
+            {{ task.description }}
+          </p>
+
+          <div class="task-meta">
+            <span class="meta-item" aria-label="Fecha de vencimiento">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 3V7M16 3V7M4 9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {{ task.dueDate ? (task.dueDate | date:'short') : 'Sin fecha' }}
+            </span>
+          </div>
+        </article>
+      </div>
+    </aside>
+  </main>
+</div>

@@ -1,0 +1,45 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="cancel()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title'">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header" [class]="modalData?.type">
+      <div class="modal-icon" [class]="getIconClass()" aria-hidden="true">
+        <svg *ngIf="modalData?.type === 'success'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="modalData?.type === 'error'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="modalData?.type === 'warning'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8V13M12 16H12.01M5 20H19L12 4L5 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="modalData?.type === 'info'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 11V16M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg *ngIf="modalData?.type === 'confirm'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12M12 15H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 id="modal-title">{{ modalData?.title }}</h2>
+      <button class="close-btn" (click)="cancel()" aria-label="Cerrar modal">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ modalData?.message }}</p>
+    </div>
+    <div class="modal-footer">
+      <button 
+        *ngIf="modalData?.type === 'confirm' && modalData?.cancelText" 
+        class="btn btn-secondary" 
+        (click)="cancel()">
+        {{ modalData?.cancelText || 'Cancelar' }}
+      </button>
+      <button 
+        class="btn btn-primary" 
+        [class.btn-success]="modalData?.type === 'success'"
+        [class.btn-error]="modalData?.type === 'error'"
+        (click)="confirm()">
+        {{ modalData?.confirmText || 'Aceptar' }}
+      </button>
+    </div>
+  </div>
+</div>

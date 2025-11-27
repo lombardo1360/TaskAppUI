@@ -1,0 +1,93 @@
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="user-info">
+        <div class="avatar" [attr.aria-label]="'Avatar de ' + ((user$ | async)?.username || '')">{{ ((user$ | async)?.username || '').charAt(0).toUpperCase() }}</div>
+        <div>
+          <h2>Hola, {{ (user$ | async)?.username }}!</h2>
+          <p>{{ (user$ | async)?.email }}</p>
+        </div>
+      </div>
+      <button class="btn-logout" (click)="logout()" aria-label="Cerrar sesión">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <main class="dashboard-main" id="main-content">
+    <div class="welcome-section">
+      <h1>Panel de Control</h1>
+      <p>Gestiona tus tareas de manera eficiente</p>
+    </div>
+
+    <section class="stats-grid" *ngIf="taskStats$ | async as stats" aria-label="Resumen de estadísticas de tareas">
+      <article class="stat-card stat-total" role="group" aria-label="Total de tareas">
+        <svg class="stat-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-content">
+          <h3>Total de Tareas</h3>
+          <p class="stat-number" aria-label="{{ stats.total }} tareas en total">{{ stats.total }}</p>
+        </div>
+      </article>
+
+      <article class="stat-card stat-completed" role="group" aria-label="Tareas completadas">
+        <svg class="stat-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-content">
+          <h3>Completadas</h3>
+          <p class="stat-number" aria-label="{{ stats.completed }} tareas completadas">{{ stats.completed }}</p>
+        </div>
+      </article>
+
+      <article class="stat-card stat-pending" role="group" aria-label="Tareas pendientes">
+        <svg class="stat-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-content">
+          <h3>Pendientes</h3>
+          <p class="stat-number" aria-label="{{ stats.pending }} tareas pendientes">{{ stats.pending }}</p>
+        </div>
+      </article>
+
+      <article class="stat-card stat-progress" role="group" aria-label="Progreso de tareas">
+        <svg class="stat-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M3 3V18H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 14L11 10L15 13L21 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-content">
+          <h3>Progreso</h3>
+          <p class="stat-number" aria-label="Progreso del {{ getCompletionPercentage(stats.completed, stats.total) }} por ciento">{{ getCompletionPercentage(stats.completed, stats.total) }}%</p>
+          <div class="progress-bar" 
+               role="progressbar" 
+               [attr.aria-valuenow]="getCompletionPercentage(stats.completed, stats.total)" 
+               aria-valuemin="0" 
+               aria-valuemax="100"
+               [attr.aria-label]="'Progreso: ' + getCompletionPercentage(stats.completed, stats.total) + '%'"
+               [title]="'Progreso: ' + getCompletionPercentage(stats.completed, stats.total) + '%'">
+            <div class="progress-fill" [style.width.%]="getCompletionPercentage(stats.completed, stats.total)"></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <nav class="action-section" aria-label="Navegación principal">
+      <button class="btn-primary" (click)="goToTasks()" aria-label="Ir a la lista de todas las tareas">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Ver Todas las Tareas
+      </button>
+      <button class="btn-secondary" (click)="goToCalendar()" aria-label="Ir al calendario de tareas">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 3V7M16 3V7M4 9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Ver Calendario
+      </button>
+    </nav>
+  </main>
+</div>

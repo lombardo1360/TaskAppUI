@@ -1,0 +1,214 @@
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<div class="tasks-container">
+  <header class="tasks-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="btn-back" (click)="goToDashboard()" aria-label="Volver al panel de control">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <h1>Mis Tareas</h1>
+      </div>
+      <div class="header-right">
+        <div class="user-info" *ngIf="user$ | async as user">
+          <span aria-label="Usuario actual">{{ user.username }}</span>
+        </div>
+        <button class="btn-logout" (click)="logout()" aria-label="Cerrar sesión">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="tasks-main" id="main-content">
+    <!-- Filters and Create Button -->
+    <nav class="actions-bar" aria-label="Filtros y acciones de tareas">
+      <div class="filters" *ngIf="currentFilter$ | async as currentFilter" role="group" aria-label="Filtrar tareas">
+        <button 
+          class="filter-btn" 
+          [class.active]="currentFilter === 'all'"
+          (click)="setFilter('all')"
+          [attr.aria-pressed]="currentFilter === 'all'"
+          aria-label="Mostrar todas las tareas">
+          Todas
+        </button>
+        <button 
+          class="filter-btn" 
+          [class.active]="currentFilter === 'pending'"
+          (click)="setFilter('pending')"
+          [attr.aria-pressed]="currentFilter === 'pending'"
+          aria-label="Mostrar solo tareas pendientes">
+          Pendientes
+        </button>
+        <button 
+          class="filter-btn" 
+          [class.active]="currentFilter === 'completed'"
+          (click)="setFilter('completed')"
+          [attr.aria-pressed]="currentFilter === 'completed'"
+          aria-label="Mostrar solo tareas completadas">
+          Completadas
+        </button>
+      </div>
+      <button class="btn-create" (click)="openCreateForm()" aria-label="Crear nueva tarea">
+        + Nueva Tarea
+      </button>
+    </nav>
+
+    <!-- Create/Edit Form -->
+    <div class="form-overlay" *ngIf="showCreateForm" (click)="closeForm()" role="dialog" aria-modal="true" [attr.aria-label]="editingTask ? 'Editar tarea' : 'Crear nueva tarea'">
+      <div class="form-container" (click)="$event.stopPropagation()">
+        <div class="form-header">
+          <h2 id="modal-title">{{ editingTask ? 'Editar Tarea' : 'Nueva Tarea' }}</h2>
+          <button class="close-btn" (click)="closeForm()" aria-label="Cerrar formulario">×</button>
+        </div>
+        <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="title">Título *</label>
+            <input 
+              type="text" 
+              id="title" 
+              formControlName="title"
+              placeholder="Nombre de la tarea"
+              [class.error]="taskForm.get('title')?.invalid && taskForm.get('title')?.touched"
+            />
+            <span class="error-message" *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+              El título es requerido (mínimo 3 caracteres)
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Descripción</label>
+            <textarea 
+              id="description" 
+              formControlName="description"
+              placeholder="Detalles de la tarea (opcional)"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="priority">Prioridad</label>
+              <select id="priority" formControlName="priority">
+                <option [value]="Priority.Low">Baja</option>
+                <option [value]="Priority.Medium">Media</option>
+                <option [value]="Priority.High">Alta</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dueDate">Fecha de Vencimiento</label>
+              <input 
+                type="date" 
+                id="dueDate" 
+                formControlName="dueDate"
+              />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="closeForm()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="taskForm.invalid">
+              {{ editingTask ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading" *ngIf="loading$ | async" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Cargando tareas...</p>
+    </div>
+
+    <!-- Tasks List -->
+    <section class="tasks-list" *ngIf="!(loading$ | async)" aria-label="Lista de tareas">
+      <article class="task-card" 
+           *ngFor="let task of tasks$ | async; trackBy: trackByTaskId"
+           [class.completed]="task.isCompleted"
+           [class.overdue]="isOverdue(task)"
+           [attr.aria-label]="'Tarea: ' + task.title + ', ' + (task.isCompleted ? 'completada' : 'pendiente') + ', prioridad ' + getPriorityLabel(task.priority)">
+        
+        <div class="task-checkbox">
+          <label [for]="'task-' + task.id" class="checkbox-label" (click)="$event.preventDefault()">
+            <input 
+              type="checkbox" 
+              [checked]="task.isCompleted"
+              (click)="onCheckboxClick($event, task)"
+              [id]="'task-' + task.id"
+              [attr.title]="'Marcar como ' + (task.isCompleted ? 'pendiente' : 'completada')"
+              [attr.aria-label]="'Marcar tarea ' + task.title + ' como ' + (task.isCompleted ? 'pendiente' : 'completada')"
+            />
+            <span class="checkbox-text" [class.completed-label]="task.isCompleted">
+              {{ task.isCompleted ? 'Completada' : 'Pendiente' }}
+            </span>
+          </label>
+        </div>
+
+        <div class="task-content">
+          <div class="task-header">
+            <h3 [class.completed-text]="task.isCompleted">{{ task.title }}</h3>
+            <span class="priority-badge" [class]="getPriorityClass(task.priority)" [attr.aria-label]="'Prioridad: ' + getPriorityLabel(task.priority)">
+              {{ getPriorityLabel(task.priority) }}
+            </span>
+          </div>
+          
+          <p class="task-description" *ngIf="task.description">
+            {{ task.description }}
+          </p>
+
+          <div class="task-meta">
+            <span class="task-date" *ngIf="task.dueDate" aria-label="Fecha de vencimiento">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 3V7M16 3V7M4 9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {{ formatDate(task.dueDate) }}
+            </span>
+            <span class="overdue-badge" *ngIf="isOverdue(task)" role="status" aria-label="Tarea vencida">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 8V13M12 16H12.01M5 20H19L12 4L5 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Vencida
+            </span>
+          </div>
+        </div>
+
+        <div class="task-actions" role="group" aria-label="Acciones de tarea">
+          <button 
+            class="btn-edit" 
+            (click)="editTask(task)"
+            [attr.aria-label]="'Editar tarea ' + task.title"
+            title="Editar tarea">
+            <svg class="action-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M11.5 1.5L14.5 4.5L5 14H2V11L11.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="action-label">Editar</span>
+          </button>
+          <button 
+            class="btn-delete" 
+            (click)="deleteTask(task)"
+            [attr.aria-label]="'Eliminar tarea ' + task.title"
+            title="Eliminar tarea">
+            <svg class="action-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 4H14M6 4V2H10V4M3 4L4 14H12L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="action-label">Eliminar</span>
+          </button>
+        </div>
+      </article>
+
+      <div class="empty-state" *ngIf="(tasks$ | async)?.length === 0" role="status">
+        <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h3>No hay tareas</h3>
+        <p>Comienza creando una nueva tarea</p>
+      </div>
+    </section>
+  </main>
+</div>
